@@ -1,0 +1,174 @@
+*&---------------------------------------------------------------------*
+*& Report  Z012_S9_MATERIAL_OP_DB
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+REPORT z012_s9_material_op_db.
+
+
+DATA: ls_material TYPE zu012_s9_mat,
+      lt_material TYPE TABLE OF zu012_s9_mat,
+      ls_mat2     TYPE zu012_s9_mat.
+
+SELECT-OPTIONS: s_matnr FOR ls_material-matnr.
+PARAMETER: p_desc TYPE zu012_s9_mat-descriere OBLIGATORY.
+PARAMETER: p_cost TYPE zu012_s9_mat-cost DEFAULT '7' OBLIGATORY.
+
+WRITE: / , '__TABEL INITIAL__'.
+
+SELECT * FROM zu012_s9_mat
+  INTO ls_material
+  WHERE matnr IN s_matnr.
+*    ORDER BY descriere.
+  WRITE: /, ls_material-mandt,     ls_material-matnr,
+            ls_material-descriere, ls_material-cost,
+            ls_material-moneda.
+
+  APPEND ls_material TO lt_material.
+
+ENDSELECT.
+
+READ TABLE lt_material INTO ls_material INDEX 3.
+
+DELETE zu012_s9_mat FROM ls_material.
+
+IF sy-subrc = 0.
+
+  COMMIT WORK AND WAIT.
+  CLEAR lt_material.
+
+  SELECT * FROM zu012_s9_mat
+    INTO TABLE lt_material
+    WHERE matnr IN s_matnr.
+
+  WRITE: / , '___DUPA STERGEREA LINIEI 3___'.
+
+  LOOP AT lt_material INTO ls_mat2.
+    WRITE: /, ls_mat2-mandt,     ls_mat2-matnr,
+              ls_mat2-descriere, ls_mat2-cost,
+              ls_mat2-moneda.
+  ENDLOOP.
+
+ELSE.
+
+  ROLLBACK WORK.
+
+  WRITE: / , '___EROARE LA STERGEREA LINIEI 3___'.
+
+ENDIF.
+
+DELETE FROM zu012_s9_mat WHERE cost = 10.
+IF sy-subrc = 0.
+
+  COMMIT WORK AND WAIT.
+  CLEAR lt_material.
+
+  SELECT * FROM zu012_s9_mat
+    INTO TABLE lt_material
+    WHERE matnr IN s_matnr.
+
+  WRITE: / , '___DUPA STERGERE COST = 10___'.
+
+  LOOP AT lt_material INTO ls_mat2.
+    WRITE: /, ls_mat2-mandt,     ls_mat2-matnr,
+              ls_mat2-descriere, ls_mat2-cost,
+              ls_mat2-moneda.
+  ENDLOOP.
+
+ELSE.
+  ROLLBACK WORK.
+
+  WRITE: / , '___EROARE STERGERE COST = 10___'.
+ENDIF.
+
+CLEAR lt_material.
+
+CLEAR ls_mat2.
+ls_mat2-mandt = sy-mandt.
+ls_mat2-matnr = '125AC'.
+ls_mat2-descriere = 'MAT1'.
+ls_mat2-cost = 12.
+ls_mat2-moneda = 'EUR'.
+
+APPEND ls_mat2 TO lt_material.
+
+CLEAR ls_mat2.
+ls_mat2-mandt = sy-mandt.
+ls_mat2-matnr = '28AB3'.
+ls_mat2-descriere = 'MAT4'.
+ls_mat2-cost = 15.
+ls_mat2-moneda = 'EUR'.
+
+APPEND ls_mat2 TO lt_material.
+
+CLEAR ls_mat2.
+ls_mat2-mandt = sy-mandt.
+ls_mat2-matnr = '3582X'.
+ls_mat2-descriere = 'MAT2'.
+ls_mat2-cost = 10.
+ls_mat2-moneda = 'EUR'.
+
+APPEND ls_mat2 TO lt_material.
+
+MODIFY zu012_s9_mat FROM TABLE lt_material.
+
+IF sy-subrc = 0.
+  COMMIT WORK.
+ENDIF.
+
+CLEAR lt_material.
+SELECT * FROM zu012_s9_mat
+  INTO TABLE lt_material
+  WHERE matnr IN s_matnr.
+
+WRITE: / , '___DUPA Inserare__'.
+
+LOOP AT lt_material INTO ls_mat2.
+  WRITE: /, ls_mat2-mandt,     ls_mat2-matnr,
+            ls_mat2-descriere, ls_mat2-cost,
+            ls_mat2-moneda.
+ENDLOOP.
+
+CLEAR lt_material.
+SELECT * FROM zu012_s9_mat
+  INTO TABLE lt_material
+  WHERE matnr IN s_matnr.
+
+LOOP AT lt_material INTO ls_material .
+  IF sy-tabix = 1.
+    ls_material-descriere = p_desc.
+
+    UPDATE zu012_s9_mat FROM ls_material.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ENDIF.
+  ENDIF.
+ENDLOOP.
+
+CLEAR lt_material.
+SELECT * FROM zu012_s9_mat
+  INTO TABLE lt_material
+  WHERE matnr IN s_matnr.
+
+WRITE: / , '___DUPA MODIFICARE DESCRIERE__'.
+
+LOOP AT lt_material INTO ls_mat2.
+  WRITE: /, ls_mat2-mandt,     ls_mat2-matnr,
+            ls_mat2-descriere, ls_mat2-cost,
+            ls_mat2-moneda.
+ENDLOOP.
+
+CLEAR lt_material.
+SELECT * FROM zu012_s9_mat
+  INTO TABLE lt_material
+  WHERE cost = p_cost.
+
+WRITE: / , '___DUPA SELECTIE MATERIAL__'.
+
+LOOP AT lt_material INTO ls_mat2.
+  WRITE: /, ls_mat2-mandt,     ls_mat2-matnr,
+            ls_mat2-descriere, ls_mat2-cost,
+            ls_mat2-moneda.
+ENDLOOP.
